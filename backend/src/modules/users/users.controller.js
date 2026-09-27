@@ -12,12 +12,37 @@ export const register = async (req, res, next) => {
 
     if (!name || !email || !password) {
       return next(
-        new AppError("name, email and password are required", 400)
+        new AppError(
+          "name, email and password are required",
+          400
+        )
       );
     }
 
+    if (password.length < 6) {
+      return next(
+        new AppError(
+          "password must be at least 6 characters",
+          400
+        )
+      );
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailRegex.test(email.trim())) {
+      return next(
+        new AppError(
+          "please enter a valid email address",
+          400
+        )
+      );
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+
     const exists = await userModel.findOne({
-      email: email.toLowerCase()
+      email: normalizedEmail
     });
 
     if (exists) {
@@ -43,6 +68,7 @@ export const register = async (req, res, next) => {
     const verificationLink =
       `https://nightmare-cinema.vercel.app/auth/verify/${emailToken}`;
 
+    try {
     await sendEmail({
       to: user.email,
       subject: "Verify your Nightmare Cinema account",
@@ -51,6 +77,16 @@ export const register = async (req, res, next) => {
         user.name
       )
     });
+    } catch (emailError) {
+      await userModel.findByIdAndDelete(user._id);
+
+      return next(
+        new AppError(
+          "could not send verification email, please try again",
+          500
+        )
+      );
+    }
 
     res.status(201).json({
       message: "user registered successfully, please verify your email",

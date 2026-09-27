@@ -158,15 +158,11 @@ if (resetPasswordForm) {
         return;
       }
 
-      if (
-        password.length < 6
-      ) {
-
-        message.textContent =
-          "Password must be at least 6 characters.";
-
-        return;
-      }
+      if (password.length < 6) {
+      message.textContent =
+        "Password must be at least 6 characters.";
+      return;
+    }
 
       button.disabled = true;
 
